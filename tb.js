@@ -10,14 +10,10 @@ CK 二选一:
 2) 你是用抓 CK 的脚本存的: 什么都不用填, 脚本自动读 $persistentStore 里的 CookieTB
    (和原脚本同一个 key, 抓过就能直接用)。
 
-配置 (加到 Shadowrocket 配置里, 只需要一行):
-[Script]
-百度贴吧签到 = type=http-request,engine=jsc,script-path=https://raw.githubusercontent.com/emby999/0w9jkxspr5vc/main/tb.js,pattern=^https:\/\/tieba\.baidu\.com\/
-并把 tieba.baidu.com 加进 [MITM] hostname。
-原理: 打开贴吧时自动抓最新 CK, 每天第一次打开顺手把签到做了并推送结果, 当天再打开只放行不重复签。
-(想另加固定时间补签, 可以再加一行 type=cron 指向同一个文件, 不加也行。)
+用法: 配合模块 modules/Tieba.sgmodule 使用 (模块里含抓 CK + 定时签到两条)。
+抓 CK 模式只存 Cookie 就放行, 不在请求里跑签到 (那样会把贴吧请求卡到异常)。
 
-签到方式: 串行。打开触发时每个吧间隔 0.2 秒 (别拖慢打开速度), 定时触发时 1.5 秒。
+签到方式: 串行, 每个吧间隔 1.5 秒, 慢一点但不容易触发风控。关注的吧很多时把 timeout 调大。
 *********************************/
 
 const CK = ""; // <- 抓到的 CK 文本粘这里; 用抓包存的就留空
@@ -25,25 +21,19 @@ const ckKey = "CookieTB";
 const UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148";
 
 if (typeof $request !== "undefined") {
-  // ---- 打开贴吧触发: 抓 CK + 每天首次顺手签到 ----
+  // ---- 抓 CK 模式: 只存 Cookie, 立刻放行 ----
   const h = $request.headers || {};
   const cookie = h["Cookie"] || h["cookie"] || "";
   if (cookie.indexOf("BDUSS=") !== -1) {
     $persistentStore.write(cookie, ckKey);
     console.log("✅ 百度贴吧 Cookie 已保存");
-    const today = new Date().toDateString();
-    if ($persistentStore.read("CookieTB_lastSign") !== today) {
-      $persistentStore.write(today, "CookieTB_lastSign");
-      mainSign(cookie, 200); // 内部结束时会 $done
-    } else {
-      $done({});
-    }
   } else {
-    $done({});
+    console.log("❌ 这个请求里没有 BDUSS, 没保存");
   }
+  $done();
 } else {
-  // ---- 定时触发: 用存好的 CK 签到 ----
-  mainSign(null, 1500);
+  // ---- 签到模式 ----
+  mainSign();
 }
 
 function httpGet(url, cookie) {
@@ -96,8 +86,8 @@ function wait(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-async function mainSign(cookieArg, interval) {
-  const cookie = cookieArg || CK || $persistentStore.read(ckKey);
+async function mainSign() {
+  const cookie = CK || $persistentStore.read(ckKey);
   if (!cookie || cookie.indexOf("BDUSS=") === -1) {
     console.log("❌ 没找到 CK: 把 CK 粘到脚本顶部, 或先用抓 CK 模式存一次");
     $notification.post("贴吧签到", "", "失败: 没找到 CK (BDUSS), 请先填 CK 或重新抓取");
@@ -144,7 +134,7 @@ async function mainSign(cookieArg, interval) {
         failed.push(bar.forum_name + ": " + r.msg);
         console.log("❌ " + bar.forum_name + " " + r.msg);
       }
-      await wait(interval);
+      await wait(1500);
     }
 
     let body =
