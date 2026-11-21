@@ -1,7 +1,7 @@
 /*********************************
 百度贴吧自动签到 - Shadowrocket 版
-来源: 原作者 @sazs34 的贴吧签到脚本 (mickeu 的 Surge 适配版逻辑),
-      接口和流程未改, 只改了 CK 读取方式和通知汇总, 适配 Shadowrocket 的 jsc 引擎。
+作者: emby999
+仓库: https://github.com/emby999/shadowrocket-scripts
 
 CK 二选一:
 1) 你抓到的 CK 是文本: 把整串 Cookie 粘到下面 CK = "" 的引号里, 例如
@@ -12,9 +12,9 @@ CK 二选一:
 
 配置 (加到 Shadowrocket 配置里):
 [Script]
-百度贴吧签到 = type=cron,engine=jsc,script-path=TieBaSignIn.js,cronexpr="5 8 * * *",timeout=300,enable=true
+百度贴吧签到 = type=cron,engine=jsc,script-path=https://raw.githubusercontent.com/emby999/shadowrocket-scripts/main/TieBaSignIn.js,cronexpr="5 8 * * *",timeout=300,enable=true
 # 可选, 还想自动抓 CK 时再加这一行, 并把 tieba.baidu.com 加进 [MITM] hostname:
-# 百度贴吧抓CK = type=http-request,engine=jsc,script-path=TieBaSignIn.js,pattern=^https:\/\/tieba\.baidu\.com\/
+# 百度贴吧抓CK = type=http-request,engine=jsc,script-path=https://raw.githubusercontent.com/emby999/shadowrocket-scripts/main/TieBaSignIn.js,pattern=^https:\/\/tieba\.baidu\.com\/
 
 签到方式: 串行, 每个吧间隔 1.5 秒, 慢一点但不容易触发风控。关注的吧很多时把 timeout 调大。
 *********************************/
