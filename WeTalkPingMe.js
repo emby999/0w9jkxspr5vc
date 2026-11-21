@@ -1,18 +1,20 @@
 /*********************************
 WeTalk + PingMe 二合一签到 - Shadowrocket 版
+作者: emby999
+仓库: https://github.com/emby999/shadowrocket-scripts
 一个文件干三件事: 抓 WeTalk 的 CK、抓 PingMe 的 CK、定时把两个都签了。
 
 为什么能合: 这俩是同一套接口和签名 (同 SECRET, 同 sign 算法),
 只是域名、存 CK 的 key、视频次数不同, 所以共用一套逻辑, 按域名分流。
 
 存 CK 的 key 和原脚本保持一致, 以前抓过的能直接接着用, 不用重抓:
-- PingMe: pingme_capture_v3, 存 {url, paramsRaw, headers} (fmz200 格式)
-- WeTalk: wetalk_accounts_v1, 存多账号 {accounts: {邮箱: {capture}}, order: []} (ZenmoFeiShi 格式, 按 email 区分账号)
+- PingMe: pingme_capture_v3, 存 {url, paramsRaw, headers}
+- WeTalk: wetalk_accounts_v1, 存多账号 {accounts: {邮箱: {capture}}, order: []} (按 email 区分账号)
 
 配置 (script-path 填这一个文件就行, 抓 CK 和签到共用同一个):
 [Script]
-WeTalkPingMe抓CK = type=http-request,engine=jsc,script-path=WeTalkPingMe.js,pattern=^https:\/\/(api\.wetalkapp\.com|api\.pingmeapp\.net)\/app\/,enable=true
-WeTalkPingMe签到 = type=cron,engine=jsc,script-path=WeTalkPingMe.js,cronexpr="5 8,20 * * *",timeout=300,enable=true
+WeTalkPingMe抓CK = type=http-request,engine=jsc,script-path=https://raw.githubusercontent.com/emby999/shadowrocket-scripts/main/WeTalkPingMe.js,pattern=^https:\/\/(api\.wetalkapp\.com|api\.pingmeapp\.net)\/app\/,enable=true
+WeTalkPingMe签到 = type=cron,engine=jsc,script-path=https://raw.githubusercontent.com/emby999/shadowrocket-scripts/main/WeTalkPingMe.js,cronexpr="5 8,20 * * *",timeout=300,enable=true
 
 [MITM]
 hostname = api.wetalkapp.com, api.pingmeapp.net
@@ -118,7 +120,7 @@ if (v == null) return '';
 try { return decodeURIComponent(String(v));} catch (e) { return String(v);}
 }
 
-// 原始 (未解码) 参数, fmz200 老 CK 只有这个
+// 原始 (未解码) 参数, 旧版 CK 只有这个
 function parseRawQuery(url) {
 const query = (String(url).split('?')[1] || '').split('#')[0];
 const out = {};
@@ -146,7 +148,7 @@ return `${now.getUTCFullYear()}-${pad(now.getUTCMonth() + 1)}-${pad(now.getUTCDa
 }
 
 function buildSignedParams(capture) {
-// 有解码参数用解码的签 (WeTalk 原版做法); 只有老 paramsRaw 时按原样签 (fmz200 PingMe 老 CK 的做法, 保持兼容)
+// 有解码参数用解码的签; 只有旧 paramsRaw 时按原样签 (兼容旧版抓的 CK)
 const useDecoded =!!capture.params;
 const saved = capture.params || capture.paramsRaw || {};
 const params = {};
