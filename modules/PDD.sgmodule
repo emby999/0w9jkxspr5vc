@@ -1,0 +1,10 @@
+#!name=拼多多果园
+#!desc=抓token + 果园每日任务, 脚本为 fmz200 出品 (远程引用)。token 存在 BoxJS 的 ddgyck 里: 进拼多多果园逛一圈浇一次水自动抓, 抓不到就在 BoxJS 里手填, 多账号用 @ 隔开。
+#!author=emby999
+
+[Script]
+拼多多抓Token = type=http-request,pattern=^https:\/\/(mobile|api)\.yangkeduo\.com\/,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/cookie/get_cookie.js
+拼多多果园 = type=cron,cronexp="30 1,8,12,17 * * *",timeout=300,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/pinduoduo/pdd_guoyuan.js
+
+[MITM]
+hostname = %APPEND% mobile.yangkeduo.com, api.yangkeduo.com
